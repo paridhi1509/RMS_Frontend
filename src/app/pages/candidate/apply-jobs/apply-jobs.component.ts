@@ -17,10 +17,16 @@ export class ApplyJobsComponent implements OnInit {
   jobs: any[] = [];
   filteredJobs: any[] = [];
 
+  // Form fields
+  expectedSalary: string = '';
+  relevantSkills: string = '';
+  selectedJobDetails: any = null;
+
   // Confirmation modal state
   showConfirmModal = false;
   confirmJobId = '';
   confirmJobTitle = '';
+  confirmApplicationId = ''; // To store application_id if it exists
 
   constructor(
     private heroService: HeroService,
@@ -133,7 +139,29 @@ export class ApplyJobsComponent implements OnInit {
     }
     this.confirmJobTitle = job?.title || 'this job';
     this.confirmJobId = jobId;
-    this.showConfirmModal = true;
+    
+    // Reset form fields
+    this.expectedSalary = '';
+    this.relevantSkills = '';
+    this.confirmApplicationId = '';
+
+    // Check if there's an existing application to get the Application ID
+    this.heroService.getApplicationByCandidateAndJR(candidateId, jobId)
+      .then(resp => {
+        const existingApp = this.heroService.xmltojson(resp, 'candidate_job_application');
+        if (existingApp) {
+          const appObj = Array.isArray(existingApp) ? existingApp[0] : existingApp;
+          this.confirmApplicationId = appObj.application_id;
+          this.expectedSalary = appObj.temp1 || '';
+          this.relevantSkills = appObj.temp2 || '';
+          this.toast.info('You have already applied for this job. You can update your details below.');
+        }
+        this.showConfirmModal = true;
+      })
+      .catch(err => {
+        console.warn('Error checking for existing application', err);
+        this.showConfirmModal = true;
+      });
   }
 
   cancelApply(): void {
@@ -143,56 +171,54 @@ export class ApplyJobsComponent implements OnInit {
   }
 
   confirmApply(): void {
+    // Validate form
+    if (!this.expectedSalary || !this.relevantSkills) {
+      this.toast.warning('Please provide your expected salary and relevant skills.');
+      return;
+    }
+
     this.showConfirmModal = false;
     const candidateId = this.authService.getCandidateId();
     const jobId = this.confirmJobId;
+    const applicationId = this.confirmApplicationId;
+    
+    const salary = this.expectedSalary;
+    const skills = this.relevantSkills;
+
     this.confirmJobId = '';
     this.confirmJobTitle = '';
+    this.confirmApplicationId = '';
+    this.expectedSalary = '';
+    this.relevantSkills = '';
 
-    // STEP 1: CHECK FOR DUPLICATE APPLICATION
-    this.heroService.getApplicationByCandidateAndJR(candidateId, jobId)
-      .then(resp => {
-        const existingApp = this.heroService.xmltojson(resp, 'candidate_job_application');
-        
-        // STEP 2: ANALYZE RESPONSE
-        if (existingApp) {
-          // DUPLICATE EXISTS
-          const response = {
-            status: "duplicate",
-            message: "You have already applied for this job."
-          };
-          console.log(JSON.stringify(response, null, 2));
-          this.toast.warning(response.message);
-          return;
-        }
+    // CREATE OR UPDATE APPLICATION
+    const applicationData = {
+      application_id: applicationId,
+      candidate_id: candidateId,
+      jr_id: jobId,
+      application_status: 'APPLIED',
+      applied_at: new Date().toISOString(),
+      stage: 'Applied',
+      temp1: salary,
+      temp2: skills
+    };
 
-        // NO DUPLICATE - STEP 3: CREATE NEW APPLICATION
-        const applicationData = {
-          candidate_id: candidateId,
-          jr_id: jobId,
-          application_status: 'APPLIED',
-          applied_at: new Date().toISOString(),
-          stage: 'Applied'
+    const jobTitleForEmail = this.confirmJobTitle;
+
+    this.heroService.updateCandidateJobApplication(applicationData)
+      .then(() => {
+        // SUCCESS RESPONSE
+        const response = {
+          status: "success",
+          message: applicationId ? "Application updated successfully." : "Application submitted successfully."
         };
+        console.log(JSON.stringify(response, null, 2));
+        this.toast.success(response.message);
 
-        const jobTitleForEmail = this.confirmJobTitle;
-
-        this.heroService.updateCandidateJobApplication(applicationData)
-          .then(() => {
-            // SUCCESS RESPONSE - STEP 4
-            const response = {
-              status: "success",
-              message: "Application submitted successfully."
-            };
-            console.log(JSON.stringify(response, null, 2));
-            this.toast.success(response.message);
-
-            // SEND MAIL FOR JOB APPLIED
-            const sessionEmail = sessionStorage.getItem('displayName') || '';
-            const subject = `Job Application Received: ${jobTitleForEmail}`;
-            const jobDetails = this.filteredJobs.find(j => j.id === jobId);
-            const companyName = jobDetails?.company || 'RMS';
-            const location = jobDetails?.location || 'Not Specified';
+        // SEND MAIL FOR JOB APPLIED
+        const sessionEmail = sessionStorage.getItem('displayName') || '';
+        const jobDetails = this.filteredJobs.find(j => j.id === jobId);
+        const subject = `Job Application Received: ${jobTitleForEmail}`;
 
         const buildEmailBody = (candidateName: string, jobTitle: string, jobLocation: string) => `
               <div style="font-family:'Inter', 'Segoe UI', Arial, sans-serif; max-width:650px; margin:0 auto; background-color:#f8faff; border-radius:12px; overflow:hidden; border:1px solid #e1e8ed;">
@@ -260,72 +286,48 @@ export class ApplyJobsComponent implements OnInit {
               </div>
             `;
 
-            // Step 4: Fetch Candidate & Latest Job Details in Parallel
-            Promise.all([
-               this.heroService.getCandidateObject(candidateId),
-               this.heroService.getJobRequisitionObject(jobId)
-            ]).then(([cResp, jResp]) => {
-               // Extract Candidate Info
-               const cData = this.heroService.xmltojson(cResp, 'candidate');
-               let finalEmail = sessionEmail;
-               let finalName = 'Candidate';
+        // Parallel Metadata Fetch
+        Promise.all([
+          this.heroService.getCandidateObject(candidateId),
+          this.heroService.getJobRequisitionObject(jobId)
+        ]).then(([cResp, jResp]) => {
+          const cData = this.heroService.xmltojson(cResp, 'candidate');
+          let finalEmail = sessionEmail;
+          let finalName = 'Candidate';
 
-               if (cData) {
-                 const cObj = Array.isArray(cData) ? cData[0] : cData;
-                 finalEmail = cObj.email || sessionEmail;
-                 finalName = cObj.name || cObj.fullName || finalEmail;
-               }
+          if (cData) {
+            const cObj = Array.isArray(cData) ? cData[0] : cData;
+            finalEmail = cObj.email || sessionEmail;
+            finalName = cObj.name || cObj.fullName || finalEmail;
+          }
 
-               // Extract Job Info
-               const jData = this.heroService.xmltojson(jResp, 'job_requisition');
-               let finalJobTitle = 'the position';
-               let finalLocation = 'Remote/Specified';
+          const jData = this.heroService.xmltojson(jResp, 'job_requisition');
+          let finalJobTitle = jobTitleForEmail;
+          let finalLocation = 'Not Specified';
 
-               if (jData) {
-                 const jObj = Array.isArray(jData) ? jData[0] : jData;
-                 finalJobTitle = jObj.job_title || finalJobTitle;
-                 finalLocation = jObj.location || finalLocation;
-               }
+          if (jData) {
+            const jObj = Array.isArray(jData) ? jData[0] : jData;
+            finalJobTitle = jObj.job_title || finalJobTitle;
+            finalLocation = jObj.location || finalLocation;
+          }
 
-               const emailSubject = `Job Application Received: ${finalJobTitle}`;
-
-               // Step 5: Send the Email
-               this.heroService.setEmailProfile().then(() => {
-                 return this.heroService.sendMail(
-                   finalEmail,
-                   finalName,
-                   'muditmwork@gmail.com',
-                   'Mudit Mathur',
-                   emailSubject,
-                   buildEmailBody(finalName, finalJobTitle, finalLocation)
-                 );
-               }).then(() => {
-                 console.log('Application confirmation email sent successfully for:', jobId);
-               }).catch(err => {
-                 console.error('Failed to send application email notification:', err);
-               });
-            }).catch(err => {
-               console.warn('Metadata fetch for email failed, skipping notification', err);
-            });
-          })
-          .catch(err => {
-            console.error('Error applying for job:', err);
-            const response = {
-              status: "error",
-              message: "Something went wrong. Please try again later."
-            };
-            console.log(JSON.stringify(response, null, 2));
-            this.toast.error(response.message);
-          });
+          this.heroService.setEmailProfile().then(() => {
+            return this.heroService.sendMail(
+              finalEmail,
+              finalName,
+              'muditmwork@gmail.com',
+              'Mudit Mathur',
+              `Job Application Received: ${finalJobTitle}`,
+              buildEmailBody(finalName, finalJobTitle, finalLocation)
+            );
+          }).then(() => {
+            console.log('Confirmation email sent');
+          }).catch(e => console.error('Email error', e));
+        }).catch(e => console.warn('Metadata error', e));
       })
       .catch(err => {
-        console.error('Error checking duplicate application:', err);
-        const response = {
-          status: "error",
-          message: "Something went wrong. Please try again later."
-        };
-        console.log(JSON.stringify(response, null, 2));
-        this.toast.error(response.message);
+        console.error('Error applying for job:', err);
+        this.toast.error("Something went wrong. Please try again later.");
       });
   }
 }

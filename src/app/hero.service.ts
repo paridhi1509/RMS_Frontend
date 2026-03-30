@@ -1029,11 +1029,14 @@ export class HeroService {
    * Maps to: <UpdateCandidate_job_application xmlns="http://schemas.cordys.com/RMS_DB_Metadata">
    */
   updateCandidateJobApplication(data: {
+    application_id?: string;
     candidate_id: string;
     jr_id: string;
     application_status: string;
     applied_at?: string;
     stage?: string;
+    temp1?: string;
+    temp2?: string;
   }): Promise<any> {
     const payload: any = {
       '@reply': 'yes',
@@ -1047,11 +1050,14 @@ export class HeroService {
             '@qConstraint': '0',
             '@qInit': '0',
             '@qValues': '',
+            ...(data.application_id ? { application_id: data.application_id } : {}),
             candidate_id: data.candidate_id,
             jr_id: data.jr_id,
             application_status: data.application_status || 'Applied',
             applied_at: data.applied_at || new Date().toISOString(),
-            stage: data.stage || 'Applied'
+            stage: data.stage || 'Applied',
+            temp1: data.temp1 || '',
+            temp2: data.temp2 || ''
           }
         }
       }
