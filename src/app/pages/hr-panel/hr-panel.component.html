@@ -969,6 +969,13 @@
             </div>
 
             <div class="form-actions mt-4" style="display: flex; gap: 15px; justify-content: flex-end;">
+              <button
+                type="button"
+                class="btn btn-outline-sm"
+                *ngIf="canRedirectInterviewToPipeline(selectedInterviewDetails)"
+                (click)="redirectInterviewToCandidatePipeline()">
+                View Candidate Pipeline
+              </button>
               <button type="button" class="btn btn-outline-sm" (click)="closeInterviewDetailsModal()">Close</button>
             </div>
           </div>

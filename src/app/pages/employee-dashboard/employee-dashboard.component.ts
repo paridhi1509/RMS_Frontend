@@ -59,6 +59,7 @@ interface Referral {
   styleUrls: ['./employee-dashboard.component.css']
 })
 export class EmployeeDashboardComponent implements OnInit {
+  private readonly RESUME_DOWNLOAD_BASE = 'http://43.242.214.239:81/home/training2025/MAHINDRA_UPLOADS/Intern_Uploads';
   activeTab: 'requests' | 'interviews' | 'referrals' | 'profile' = 'profile';
 
   // Loading & error
@@ -345,6 +346,14 @@ export class EmployeeDashboardComponent implements OnInit {
 
   closeInterviewDetail(): void {
     this.selectedInterview = null;
+  }
+
+  getSelectedResumeUrl(): string {
+    const rawPath = this.selectedInterview?.candidate_resume_path || '';
+    if (!rawPath) return '';
+    const fileName = rawPath.split(/[/\\]/).pop()?.trim();
+    if (!fileName) return '';
+    return `${this.RESUME_DOWNLOAD_BASE}/${fileName}`;
   }
 
   // ─── Submit Feedback ───

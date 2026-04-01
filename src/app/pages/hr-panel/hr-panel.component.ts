@@ -446,6 +446,36 @@ export class HrPanelComponent implements OnInit {
     this.showInterviewDetailsModal = true;
   }
 
+  getCandidateForInterviewGroup(group: any): any | null {
+    if (!group) return null;
+
+    const candidateId = this.getExt(group.candidate_id);
+    const jrId = this.getExt(group.jr_id);
+
+    return this.candidates.find((candidate: any) => {
+      const candidateJrId = this.getExt(candidate.raw?.application?.jr_id);
+      return candidate.candidate_id === candidateId && (!jrId || candidateJrId === jrId);
+    }) || this.candidates.find((candidate: any) => candidate.candidate_id === candidateId) || null;
+  }
+
+  canRedirectInterviewToPipeline(group: any): boolean {
+    return !!group && this.isAllFeedbackReceived(group.interview_id) && !!this.getCandidateForInterviewGroup(group);
+  }
+
+  async redirectInterviewToCandidatePipeline() {
+    const group = this.selectedInterviewDetails;
+    const candidate = this.getCandidateForInterviewGroup(group);
+
+    if (!group || !candidate) {
+      this.showToast('Candidate details are not available for this interview.', 'error');
+      return;
+    }
+
+    this.closeInterviewDetailsModal();
+    this.activeTab = 'Candidate Pipeline';
+    this.openKanbanModal(candidate);
+  }
+
   closeInterviewDetailsModal() {
     this.showInterviewDetailsModal = false;
     this.selectedInterviewDetails = null;
