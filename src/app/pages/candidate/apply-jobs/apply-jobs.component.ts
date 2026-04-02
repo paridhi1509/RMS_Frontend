@@ -20,6 +20,8 @@ export class ApplyJobsComponent implements OnInit {
   // Form fields
   expectedSalary: string = '';
   relevantSkills: string = '';
+  preferredLocation: string = '';
+  availableLocations: string[] = [];
   selectedJobDetails: any = null;
 
   // Referral fields
@@ -144,10 +146,19 @@ export class ApplyJobsComponent implements OnInit {
     this.confirmJobTitle = job?.title || 'this job';
     this.confirmJobId = jobId;
     this.selectedJobDetails = job || null;
+
+    // Parse available locations from job details
+    this.availableLocations = [];
+    if (job && job.location) {
+      // Handle comma or slash separated locations, defaulting to providing what's available
+      const rawLoc = typeof job.location === 'string' ? job.location : (job.location?.text || job.location?.['#text'] || String(job.location));
+      this.availableLocations = rawLoc.split(/[,\/]/).map((l: string) => l.trim()).filter((l: string) => l.length > 0);
+    }
     
     // Reset form fields
     this.expectedSalary = '';
     this.relevantSkills = '';
+    this.preferredLocation = '';
     this.hasReferral = false;
     this.referralEmployeeId = '';
     this.confirmApplicationId = '';
@@ -161,6 +172,13 @@ export class ApplyJobsComponent implements OnInit {
           this.confirmApplicationId = appObj.application_id;
           this.expectedSalary = appObj.temp1 || '';
           this.relevantSkills = appObj.temp2 || '';
+          this.preferredLocation = appObj.temp3 || '';
+          
+          // If the previously selected location isn't in the job's defined locations, add it to options to avoid breaking the UI
+          if (this.preferredLocation && !this.availableLocations.includes(this.preferredLocation)) {
+            this.availableLocations.push(this.preferredLocation);
+          }
+          
           this.toast.info('You have already applied for this job. You can update your details below.');
         }
         this.showConfirmModal = true;
@@ -179,8 +197,8 @@ export class ApplyJobsComponent implements OnInit {
 
   confirmApply(): void {
     // Validate form
-    if (!this.expectedSalary || !this.relevantSkills) {
-      this.toast.warning('Please provide your expected salary and relevant skills.');
+    if (!this.expectedSalary || !this.relevantSkills || !this.preferredLocation) {
+      this.toast.warning('Please provide your expected salary, relevant skills, and preferred location.');
       return;
     }
 
@@ -197,6 +215,7 @@ export class ApplyJobsComponent implements OnInit {
     
     const salary = this.expectedSalary;
     const skills = this.relevantSkills;
+    const location = this.preferredLocation;
     const isReferral = this.hasReferral;
     const refEmployeeId = this.referralEmployeeId.trim();
 
@@ -205,6 +224,7 @@ export class ApplyJobsComponent implements OnInit {
     this.confirmApplicationId = '';
     this.expectedSalary = '';
     this.relevantSkills = '';
+    this.preferredLocation = '';
     this.hasReferral = false;
     this.referralEmployeeId = '';
 
@@ -217,7 +237,8 @@ export class ApplyJobsComponent implements OnInit {
       applied_at: new Date().toISOString(),
       stage: 'Applied',
       temp1: salary,
-      temp2: skills
+      temp2: skills,
+      temp3: location
     };
 
     const jobTitleForEmail = this.confirmJobTitle;

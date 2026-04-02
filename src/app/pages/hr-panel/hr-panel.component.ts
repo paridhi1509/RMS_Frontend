@@ -481,6 +481,7 @@ export class HrPanelComponent implements OnInit {
     this.selectedInterviewDetails = null;
     this.selectedInterviewPanels = [];
   }
+
   getJobTitleById(jrId: string): string {
     const job = this.jobsList.find(j => j.jr_id === jrId);
     return job ? job.job_title : '';
@@ -491,6 +492,7 @@ export class HrPanelComponent implements OnInit {
       window.open(link, '_blank');
     }
   }
+
   async openAddPanelModalWithInterview() {
     this.showAddPanelModal = true;
     this.selectedJobId = '';
@@ -595,6 +597,7 @@ export class HrPanelComponent implements OnInit {
           });
         }
       });
+
       const appData = this.heroService.xmltojson(resp, 'tuple');
       const appArray = appData ? (Array.isArray(appData) ? appData : [appData]) : [];
       
@@ -667,6 +670,7 @@ export class HrPanelComponent implements OnInit {
     }
     return names.slice(0, 2).join(', ') + ' +' + (names.length - 2) + ' more';
   }
+
   async createInterviews() {
     // Validation
     if (!this.selectedJobId) {
@@ -1877,6 +1881,7 @@ export class HrPanelComponent implements OnInit {
     });
     console.log('[HrPanel] Calculated applicant counts', this.jobsList.map(j => ({ id: j.id, title: j.title, applicants: j.applicants })));
   }
+
   // --- Pagination Logic for Jobs ---
   jobsCurrentPage = 1;
   jobsPageSize = 5;
