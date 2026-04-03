@@ -1263,6 +1263,13 @@ export class HrPanelComponent implements OnInit {
     event.preventDefault();
     this.dragOverStage = '';
     if (this.draggedCandidate && this.draggedCandidate.stage !== toStageId) {
+      const validationError = this.validateInterviewStageProgression(this.draggedCandidate, toStageId);
+      if (validationError) {
+        this.showToast(validationError, 'error');
+        this.draggedCandidate = null;
+        return;
+      }
+
       this.pendingMove = {
         candidate: this.draggedCandidate,
         fromStage: this.draggedCandidate.stage,
@@ -2231,6 +2238,73 @@ export class HrPanelComponent implements OnInit {
 
   getPanelsForInterview(interviewId: string): any[] {
     return this.allPanelRecords.filter((p: any) => p.interview_id === interviewId);
+  }
+
+  isInterviewStageId(stageId: string): boolean {
+    return /^interviewing(\d+)?$/.test(stageId || '');
+  }
+
+  getRoundNumberFromStage(stageId: string): number | null {
+    if (!this.isInterviewStageId(stageId)) return null;
+    if (stageId === 'interviewing') return 1;
+    const match = stageId.match(/^interviewing(\d+)$/);
+    return match ? parseInt(match[1], 10) : null;
+  }
+
+  getRoundNumberFromLabel(roundLabel: string): number | null {
+    const match = (roundLabel || '').match(/(\d+)/);
+    return match ? parseInt(match[1], 10) : null;
+  }
+
+  getInterviewForStage(candidateId: string, jrId: string, stageId: string): any | null {
+    const roundNumber = this.getRoundNumberFromStage(stageId);
+    if (!roundNumber) return null;
+
+    const interviews = this.getInterviewsForCandidate(candidateId, jrId);
+    return interviews.find((interview: any) => this.getRoundNumberFromLabel(interview.round) === roundNumber) || null;
+  }
+
+  requiresInterviewCompletionValidation(fromStage: string, toStage: string): boolean {
+    const fromRound = this.getRoundNumberFromStage(fromStage);
+    if (!fromRound) return false;
+
+    if (toStage === 'offered') return true;
+
+    const toRound = this.getRoundNumberFromStage(toStage);
+    return toRound !== null && toRound > fromRound;
+  }
+
+  validateInterviewStageProgression(candidate: any, toStage: string): string | null {
+    const fromStage = candidate?.stage || '';
+    if (!this.requiresInterviewCompletionValidation(fromStage, toStage)) {
+      return null;
+    }
+
+    const candidateId = candidate?.candidate_id;
+    const jrId = this.getExt(candidate?.raw?.application?.jr_id);
+    const currentInterview = this.getInterviewForStage(candidateId, jrId, fromStage);
+    const currentRoundNumber = this.getRoundNumberFromStage(fromStage);
+    const currentRoundLabel = currentRoundNumber ? `Round ${currentRoundNumber}` : 'current round';
+
+    if (!currentInterview) {
+      return `${currentRoundLabel} interview is not created for this candidate yet.`;
+    }
+
+    if (!currentInterview.scheduled_date || currentInterview.scheduled_date === 'Not scheduled') {
+      return `${currentRoundLabel} interview must be scheduled before moving the candidate forward.`;
+    }
+
+    const panels = this.getPanelsForInterview(currentInterview.interview_id);
+    if (panels.length === 0) {
+      return `${currentRoundLabel} interview has no panelists assigned yet.`;
+    }
+
+    const allPanelsComplete = panels.every((panel: any) => panel.feedback && panel.rating);
+    if (!allPanelsComplete) {
+      return `All panelists must submit feedback and rating for ${currentRoundLabel} before moving the candidate forward.`;
+    }
+
+    return null;
   }
 
   isAllFeedbackReceived(interviewId: string): boolean {
