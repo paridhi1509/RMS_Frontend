@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -7,6 +7,7 @@ import { HeroService } from '../../hero.service';
 import { AuthService } from '../../auth.service';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import Chart from 'chart.js/auto';
 
 @Component({
   selector: 'app-hr-panel',
@@ -88,6 +89,99 @@ export class HrPanelComponent implements OnInit {
   isHrDelegating = false;
 
   constructor(private heroService: HeroService, private auth: AuthService, private router: Router, private http: HttpClient) {}
+
+  // Hiring Trend Chart
+  @ViewChild('hiringChartCanvas') set setHiringChartCanvas(content: ElementRef) {
+    if (content) {
+      this.hiringChartCanvas = content;
+      this.renderHiringChart();
+    }
+  }
+  hiringChartCanvas!: ElementRef;
+  hiringChart: Chart | null = null;
+  chartView: 'weekly' | 'monthly' = 'weekly';
+
+  changeChartView(event: any) {
+    this.chartView = event.target.value;
+    this.renderHiringChart();
+  }
+
+  renderHiringChart() {
+    if (!this.hiringChartCanvas) return;
+    const ctx = this.hiringChartCanvas.nativeElement.getContext('2d');
+    
+    let labels: string[] = [];
+    let data: number[] = [];
+    
+    const now = new Date();
+
+    if (this.chartView === 'weekly') {
+      labels = ['Week 1', 'Week 2', 'Week 3', 'Week 4'];
+      data = [0, 0, 0, 0];
+      this.candidates.forEach(c => {
+        if (!c.appliedDate) return;
+        const d = new Date(c.appliedDate);
+        const diffDays = Math.floor((now.getTime() - d.getTime()) / (1000 * 3600 * 24));
+        if (diffDays <= 7) data[3]++;
+        else if (diffDays <= 14) data[2]++;
+        else if (diffDays <= 21) data[1]++;
+        else if (diffDays <= 28) data[0]++;
+      });
+    } else {
+      labels = [];
+      data = [0, 0, 0, 0, 0, 0];
+      for (let i = 5; i >= 0; i--) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        labels.push(d.toLocaleString('default', { month: 'short' }));
+      }
+      this.candidates.forEach(c => {
+         if (!c.appliedDate) return;
+         const d = new Date(c.appliedDate);
+         const monthDiff = (now.getFullYear() - d.getFullYear()) * 12 + now.getMonth() - d.getMonth();
+         if (monthDiff >= 0 && monthDiff < 6) {
+            data[5 - monthDiff]++;
+         }
+      });
+    }
+
+    if (this.hiringChart) {
+      this.hiringChart.destroy();
+    }
+    
+    this.hiringChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'Candidates Applied',
+          data: data,
+          borderColor: '#0B2265',
+          backgroundColor: 'transparent',
+          borderWidth: 2,
+          tension: 0,
+          fill: false,
+          pointBackgroundColor: '#10B981',
+          pointRadius: 4
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false }
+        },
+        scales: {
+          y: { 
+            beginAtZero: true, 
+            suggestedMax: 25,
+            ticks: { stepSize: 5, precision: 0 },
+            grid: { color: '#E2E8F0' } 
+          },
+          x: { grid: { display: false } }
+        }
+      }
+    });
+  }
 
   ngOnInit() {
     this.resolveLoggedInUser();
@@ -204,17 +298,36 @@ export class HrPanelComponent implements OnInit {
     return '18d';
   }
 
-  get funnelAppliedCount() { return this.candidates.filter(c => c.stage === 'applied' || c.stage === 'rejected').length; }
-  get funnelScreenedCount() { return this.candidates.filter(c => !['applied', 'rejected', 'revoked', 'withdrawn'].includes(c.stage)).length; }
-  get funnelInterviewingCount() { return this.candidates.filter(c => ['interviewing', 'offered', 'joined'].includes(c.stage)).length; }
-  get funnelOfferedCount() { return this.candidates.filter(c => ['offered', 'joined'].includes(c.stage)).length; }
-  get funnelJoinedCount() { return this.candidates.filter(c => c.stage === 'joined').length; }
+  // Pipeline Flow Funnel Tracking
+  get activeFunnelCandidates() {
+    return this.candidates.filter(c => !['rejected', 'revoked', 'withdrawn'].includes(c.stage));
+  }
+
+  get funnelAppliedCount() { 
+    return this.activeFunnelCandidates.length; 
+  }
+  
+  get funnelScreenedCount() { 
+    return this.activeFunnelCandidates.filter(c => c.stage !== 'applied').length; 
+  }
+  
+  get funnelInterviewingCount() { 
+    return this.activeFunnelCandidates.filter(c => c.stage !== 'applied' && c.stage !== 'screened').length; 
+  }
+  
+  get funnelOfferedCount() { 
+    return this.activeFunnelCandidates.filter(c => ['offered', 'joined'].includes(c.stage)).length; 
+  }
+  
+  get funnelJoinedCount() { 
+    return this.activeFunnelCandidates.filter(c => c.stage === 'joined').length; 
+  }
 
   get funnelAppliedWidth() { return 100; }
-  get funnelScreenedWidth() { return this.funnelAppliedCount ? Math.max(15, (this.funnelScreenedCount / this.funnelAppliedCount) * 100) : 0; }
-  get funnelInterviewingWidth() { return this.funnelAppliedCount ? Math.max(15, (this.funnelInterviewingCount / this.funnelAppliedCount) * 100) : 0; }
-  get funnelOfferedWidth() { return this.funnelAppliedCount ? Math.max(15, (this.funnelOfferedCount / this.funnelAppliedCount) * 100) : 0; }
-  get funnelJoinedWidth() { return this.funnelAppliedCount ? Math.max(15, (this.funnelJoinedCount / this.funnelAppliedCount) * 100) : 0; }
+  get funnelScreenedWidth() { return this.funnelAppliedCount > 0 ? Math.max(15, (this.funnelScreenedCount / this.funnelAppliedCount) * 100) : 0; }
+  get funnelInterviewingWidth() { return this.funnelScreenedCount > 0 ? Math.max(15, (this.funnelInterviewingCount / this.funnelScreenedCount) * 100) : 0; }
+  get funnelOfferedWidth() { return this.funnelInterviewingCount > 0 ? Math.max(15, (this.funnelOfferedCount / this.funnelInterviewingCount) * 100) : 0; }
+  get funnelJoinedWidth() { return this.funnelOfferedCount > 0 ? Math.max(15, (this.funnelJoinedCount / this.funnelOfferedCount) * 100) : 0; }
 
   get overdueInterviewsCount() {
     const today = new Date().toISOString().split('T')[0];
@@ -1142,6 +1255,49 @@ export class HrPanelComponent implements OnInit {
     return this.filteredCandidates.filter(c => !['joined', 'revoked', 'withdrawn'].includes(c.stage));
   }
 
+  // Pipeline Pagination
+  pipelineCurrentPage = 1;
+  pipelinePageSize = 8;
+
+  get paginatedActiveCandidates() {
+    const start = (this.pipelineCurrentPage - 1) * this.pipelinePageSize;
+    return this.activeCandidates.slice(start, start + this.pipelinePageSize);
+  }
+
+  get pipelineTotalPages() {
+    return Math.ceil(this.activeCandidates.length / this.pipelinePageSize) || 1;
+  }
+
+  changePipelinePage(delta: number) {
+    const newPage = this.pipelineCurrentPage + delta;
+    if (newPage >= 1 && newPage <= this.pipelineTotalPages) {
+      this.pipelineCurrentPage = newPage;
+    }
+  }
+
+  // Helper for Candidate Comparison
+  getLatestFeedbackAndRating(candidateId: string) {
+    if (!this.allInterviews || !this.allPanelRecords) {
+      return { feedback: 'Pending', rating: 'N/A' };
+    }
+    const candidateInterviews = this.allInterviews.filter((i: any) => i.candidate_id === candidateId);
+    if (!candidateInterviews.length) return { feedback: 'Pending', rating: 'N/A' };
+    
+    // Sort interviews by date descending
+    candidateInterviews.sort((a: any, b: any) => new Date(b.scheduled_date).getTime() - new Date(a.scheduled_date).getTime());
+    
+    for (const interview of candidateInterviews) {
+      const panels = this.allPanelRecords.filter((p: any) => p.interview_id === interview.interview_id);
+      for (const panel of panels) {
+        if (panel.feedback && panel.rating) {
+           return { feedback: panel.feedback, rating: panel.rating };
+        }
+      }
+    }
+    return { feedback: 'Pending', rating: 'N/A' };
+  }
+
+
   get visiblePipelineCandidatesCount() {
     const visibleStageIds = new Set(this.pipelineStages.map(stage => stage.id));
     const uniqueCandidateIds = new Set(
@@ -1417,6 +1573,7 @@ export class HrPanelComponent implements OnInit {
       this.syncPipelineStagesFromCandidates();
       console.log('[HrPanel] Loaded candidates:', this.candidates);
       this.calculateApplicantCounts();
+      this.renderHiringChart();
     } catch (e) {
       console.error('[HrPanel] Error loading candidates:', e);
       this.showToast('Failed to load candidates from server.', 'error');
@@ -1634,7 +1791,7 @@ export class HrPanelComponent implements OnInit {
           is_hired: hiredCandidateIds.has(candidateId),
           created_at: ext(record.created_at)
         };
-      }).filter((r: any) => r.employee_id);
+      }).filter((r: any) => r.employee_id && r.referral_status?.toUpperCase() === 'APPROVED');
 
       // Count referrals per employee
       const referralCounts = new Map<string, { total: number; successful: number }>();

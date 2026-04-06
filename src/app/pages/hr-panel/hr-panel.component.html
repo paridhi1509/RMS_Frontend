@@ -141,110 +141,25 @@
 
         <!-- Dashboard Widgets -->
         <div class="dashboard-grid">
-          <!-- Pipeline Flow Chart -->
+          <!-- Hiring Trend Chart -->
           <div class="dashboard-card panel-funnel"
-            style="box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05); border: 1px solid #e2e8f0; border-radius: 12px; display: flex; flex-direction: column;">
+            style="box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05); border: 1px solid #e2e8f0; border-radius: 12px; display: flex; flex-direction: column; min-height: 250px;">
             <div class="card-header flex-between mb-2">
               <div class="title-with-badge">
                 <h3 style="margin:0; font-weight: 700; color: #1E293B;"><i class="fas fa-chart-line"
-                    style="color: #0B2265;"></i> Recruitment Pipeline Flow</h3>
+                    style="color: #0B2265;"></i> Hiring Trend</h3>
+              </div>
+              <div class="header-actions">
+                <select class="form-select" style="padding: 4px 8px; border-radius: 6px; font-size: 0.85rem; border: 1px solid #E2E8F0;" (change)="changeChartView($event)">
+                  <option value="weekly">Week-wise (Past Month)</option>
+                  <option value="monthly">Month-wise (Past 6 Months)</option>
+                </select>
               </div>
             </div>
 
             <div class="pipeline-track-wrapper"
-              style="flex-grow: 1; display: flex; flex-direction: column; justify-content: space-between; padding-top: 10px;">
-              <div class="pipeline-track" style="position: relative; padding: 1.5rem 0; margin-bottom: 5px;">
-                <!-- Connecting line -->
-                <div
-                  style="position: absolute; top: 50%; left: 8%; right: 8%; height: 6px; background: #E2E8F0; z-index: 1; transform: translateY(-50%); border-radius: 3px;">
-                  <div
-                    style="width: 100%; height: 100%; background: linear-gradient(90deg, #0B2265, #10B981); border-radius: 3px; opacity: 0.8;">
-                  </div>
-                </div>
-
-                <div style="display: flex; justify-content: space-between; position: relative; z-index: 2; padding: 0;">
-                  <!-- Applied -->
-                  <div class="pipeline-node text-center"
-                    style="display: flex; flex-direction: column; align-items: center; width: 80px;">
-                    <div class="node-circle"
-                      style="width: 55px; height: 55px; border-radius: 50%; background: #0B2265; color: white; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; font-weight: bold; margin-bottom: 12px; border: 4px solid white; box-shadow: 0 4px 10px rgba(11,34,101,0.2); transition: transform 0.2s;">
-                      {{ funnelAppliedCount }}
-                    </div>
-                    <div style="font-weight: 700; color: #1E293B; font-size: 0.9rem;">Applied</div>
-                  </div>
-
-                  <!-- Screened -->
-                  <div class="pipeline-node text-center"
-                    style="display: flex; flex-direction: column; align-items: center; width: 80px;">
-                    <div class="node-circle"
-                      style="width: 55px; height: 55px; border-radius: 50%; background: #2F4B8F; color: white; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; font-weight: bold; margin-bottom: 12px; border: 4px solid white; box-shadow: 0 4px 10px rgba(47,75,143,0.2); transition: transform 0.2s;">
-                      {{ funnelScreenedCount }}
-                    </div>
-                    <div style="font-weight: 700; color: #1E293B; font-size: 0.9rem;">Screened</div>
-                  </div>
-
-                  <!-- Interviewing -->
-                  <div class="pipeline-node text-center"
-                    style="display: flex; flex-direction: column; align-items: center; width: 80px;">
-                    <div class="node-circle"
-                      style="width: 55px; height: 55px; border-radius: 50%; background: #0088A8; color: white; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; font-weight: bold; margin-bottom: 12px; border: 4px solid white; box-shadow: 0 4px 10px rgba(0,136,168,0.2); transition: transform 0.2s;">
-                      {{ funnelInterviewingCount }}
-                    </div>
-                    <div style="font-weight: 700; color: #1E293B; font-size: 0.9rem;">Interview</div>
-                  </div>
-
-                  <!-- Offered -->
-                  <div class="pipeline-node text-center"
-                    style="display: flex; flex-direction: column; align-items: center; width: 80px;">
-                    <div class="node-circle"
-                      style="width: 55px; height: 55px; border-radius: 50%; background: #00C4F0; color: white; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; font-weight: bold; margin-bottom: 12px; border: 4px solid white; box-shadow: 0 4px 10px rgba(0,196,240,0.2); transition: transform 0.2s;">
-                      {{ funnelOfferedCount }}
-                    </div>
-                    <div style="font-weight: 700; color: #1E293B; font-size: 0.9rem;">Offered</div>
-                  </div>
-
-                  <!-- Joined -->
-                  <div class="pipeline-node text-center"
-                    style="display: flex; flex-direction: column; align-items: center; width: 80px;">
-                    <div class="node-circle"
-                      style="width: 55px; height: 55px; border-radius: 50%; background: #10B981; color: white; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; font-weight: bold; margin-bottom: 12px; border: 4px solid white; box-shadow: 0 4px 10px rgba(16,185,129,0.2); transition: transform 0.2s;">
-                      {{ funnelJoinedCount }}
-                    </div>
-                    <div style="font-weight: 700; color: #1E293B; font-size: 0.9rem;">Joined</div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Conversion Stats Cards -->
-              <div
-                style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; border-top: 1px solid #E2E8F0; padding-top: 18px;">
-                <div
-                  style="background: #F8FAFC; padding: 12px; border-radius: 8px; text-align: center; border: 1px solid #F1F5F9; transition: transform 0.2s; cursor: default;">
-                  <div
-                    style="font-size: 0.75rem; color: #64748B; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">
-                    Passing Screen</div>
-                  <div style="font-size: 1.4rem; color: #2F4B8F; font-weight: 800; margin-top: 4px;">{{
-                    (funnelAppliedCount > 0 ? (funnelScreenedCount/funnelAppliedCount)*100 : 0) | number:'1.0-0' }}%
-                  </div>
-                </div>
-                <div
-                  style="background: #F8FAFC; padding: 12px; border-radius: 8px; text-align: center; border: 1px solid #F1F5F9; transition: transform 0.2s; cursor: default;">
-                  <div
-                    style="font-size: 0.75rem; color: #64748B; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">
-                    Interview Rate</div>
-                  <div style="font-size: 1.4rem; color: #0088A8; font-weight: 800; margin-top: 4px;">{{
-                    (funnelScreenedCount > 0 ? (funnelInterviewingCount/funnelScreenedCount)*100 : 0) | number:'1.0-0'
-                    }}%</div>
-                </div>
-                <div
-                  style="background: #F8FAFC; padding: 12px; border-radius: 8px; text-align: center; border: 1px solid #F1F5F9; transition: transform 0.2s; cursor: default;">
-                  <div
-                    style="font-size: 0.75rem; color: #64748B; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">
-                    Offer Accept</div>
-                  <div style="font-size: 1.4rem; color: #10B981; font-weight: 800; margin-top: 4px;">{{
-                    (funnelOfferedCount > 0 ? (funnelJoinedCount/funnelOfferedCount)*100 : 0) | number:'1.0-0' }}%</div>
-                </div>
-              </div>
+              style="flex-grow: 1; display: flex; flex-direction: column; padding-top: 10px; position: relative;">
+              <canvas #hiringChartCanvas style="width: 100%; height: 100%; min-height: 150px;"></canvas>
             </div>
           </div>
 
@@ -271,7 +186,7 @@
                   </div>
                 </div>
                 <button class="badge-btn badge-red-soft text-xs border-none cursor-pointer p-1"
-                  style="font-weight: 600;" *ngIf="overdueInterviewsCount > 0">Resolve</button>
+                  style="font-weight: 600;" *ngIf="overdueInterviewsCount > 0" (click)="setActiveTab('Candidate Pipeline')">Resolve</button>
                 <i class="fas fa-check-circle" style="color: #10B981;" *ngIf="overdueInterviewsCount === 0"></i>
               </div>
 
@@ -288,7 +203,7 @@
                   </div>
                 </div>
                 <button class="badge-btn badge-orange-soft text-xs border-none cursor-pointer p-1"
-                  style="font-weight: 600;" *ngIf="pendingOffersCount > 0">Nudge</button>
+                  style="font-weight: 600;" *ngIf="pendingOffersCount > 0" (click)="setActiveTab('Candidate Pipeline')">Nudge</button>
                 <i class="fas fa-check-circle" style="color: #10B981;" *ngIf="pendingOffersCount === 0"></i>
               </div>
 
@@ -305,7 +220,7 @@
                   </div>
                 </div>
                 <button class="badge-btn badge-blue-light text-xs border-none cursor-pointer p-1"
-                  style="font-weight: 600;" *ngIf="aiScreeningReadyCount > 0">Review</button>
+                  style="font-weight: 600;" *ngIf="aiScreeningReadyCount > 0" (click)="setActiveTab('Candidate Pipeline')">Review</button>
                 <i class="fas fa-check-circle" style="color: #10B981;" *ngIf="aiScreeningReadyCount === 0"></i>
               </div>
 
@@ -1186,16 +1101,13 @@
 
           <!-- Candidate Cards Grid -->
           <div class="pipeline-candidates-grid">
-            <div class="pipeline-candidate-card" *ngFor="let candidate of activeCandidates" (click)="openKanbanModal(candidate)">
+            <div class="pipeline-candidate-card" *ngFor="let candidate of paginatedActiveCandidates" (click)="openKanbanModal(candidate)">
               <div class="pipeline-card-top">
                 <div class="pipeline-card-avatar" [style.background]="getStageColor(candidate.stage)">{{ candidate.avatar }}</div>
                 <div class="pipeline-card-info">
                   <div class="pipeline-card-name">{{ candidate.name }}</div>
                   <div class="pipeline-card-role">{{ candidate.role }}</div>
                 </div>
-                <!-- <div class="pipeline-card-score" [style.color]="candidate.score >= 85 ? '#10B981' : candidate.score >= 70 ? '#F59E0B' : '#EF4444'">
-                  {{ candidate.score }}%
-                </div> -->
               </div>
               <div class="pipeline-card-meta">
                 <span class="pipeline-stage-badge" [style.background]="getStageColor(candidate.stage) + '18'" [style.color]="getStageColor(candidate.stage)">
@@ -1203,13 +1115,36 @@
                 </span>
                 <span class="pipeline-dept-badge">{{ candidate.department }}</span>
               </div>
-              <div class="pipeline-card-skills">
-                <span class="pipeline-skill-tag" *ngFor="let skill of candidate.skills">{{ skill }}</span>
-              </div>
               <div class="pipeline-card-footer">
                 <span class="text-xs text-muted"><i class="far fa-calendar-alt"></i> Applied {{ candidate.appliedDate }}</span>
                 <span class="pipeline-view-link"><i class="fas fa-external-link-alt"></i> View Pipeline</span>
               </div>
+            </div>
+          </div>
+          
+          <!-- Pagination Controls for Candidate Pipeline -->
+          <div class="pagination-controls" style="display: flex; justify-content: space-between; align-items: center; padding: 15px; border-top: 1px solid #E2E8F0;" *ngIf="activeCandidates.length > 0">
+            <div style="color: #64748B; font-size: 0.85rem;">
+              Showing <span style="font-weight: 600; color: #1E293B;">{{ (pipelineCurrentPage - 1) * pipelinePageSize + 1 }}</span> 
+              to <span style="font-weight: 600; color: #1E293B;">{{ (pipelineCurrentPage * pipelinePageSize) > activeCandidates.length ? activeCandidates.length : (pipelineCurrentPage * pipelinePageSize) }}</span> 
+              of <span style="font-weight: 600; color: #1E293B;">{{ activeCandidates.length }}</span> candidates
+            </div>
+            <div style="display: flex; gap: 8px;">
+              <button class="btn btn-outline-sm" 
+                      [disabled]="pipelineCurrentPage === 1" 
+                      (click)="changePipelinePage(-1)"
+                      style="padding: 4px 12px;">
+                <i class="fas fa-chevron-left" style="font-size: 0.75rem;"></i> Prev
+              </button>
+              <div style="display: flex; align-items: center; padding: 0 10px; font-size: 0.9rem; font-weight: 600; color: #1E293B; background: #F1F5F9; border-radius: 6px;">
+                {{ pipelineCurrentPage }} / {{ pipelineTotalPages }}
+              </div>
+              <button class="btn btn-outline-sm" 
+                      [disabled]="pipelineCurrentPage === pipelineTotalPages" 
+                      (click)="changePipelinePage(1)"
+                      style="padding: 4px 12px;">
+                Next <i class="fas fa-chevron-right" style="font-size: 0.75rem;"></i>
+              </button>
             </div>
           </div>
 
@@ -1366,8 +1301,14 @@
                   <div class="pipeline-card-name">{{ candidate.name }}</div>
                   <div class="pipeline-card-role">{{ candidate.role }}</div>
                 </div>
-                <div class="pipeline-card-score" [style.color]="candidate.score >= 85 ? '#10B981' : candidate.score >= 70 ? '#F59E0B' : '#EF4444'">
-                  {{ candidate.score }}%
+                <div class="pipeline-card-score" style="display: flex; flex-direction: column; align-items: flex-end; justify-content: center; font-size: 0.85rem; font-weight: normal; margin-left: auto;">
+                  <div style="font-weight: 700; color: #1E293B;">
+                    <i class="fas fa-star" style="color: #F59E0B; font-size: 0.75rem;" *ngIf="getLatestFeedbackAndRating(candidate.candidate_id).rating !== 'N/A'"></i>
+                    {{ getLatestFeedbackAndRating(candidate.candidate_id).rating !== 'N/A' ? getLatestFeedbackAndRating(candidate.candidate_id).rating : 'Pending' }}
+                  </div>
+                  <div style="color: #64748B; font-size: 0.75rem; max-width: 90px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: right;" [title]="getLatestFeedbackAndRating(candidate.candidate_id).feedback">
+                    {{ getLatestFeedbackAndRating(candidate.candidate_id).feedback !== 'Pending' ? getLatestFeedbackAndRating(candidate.candidate_id).feedback : 'Awaiting Feedback' }}
+                  </div>
                 </div>
               </div>
               <div class="pipeline-card-meta">
@@ -1375,9 +1316,6 @@
                   <i class="fas fa-circle" style="font-size: 6px;"></i> {{ getStageName(candidate.stage) }}
                 </span>
                 <span class="pipeline-dept-badge">{{ candidate.department }}</span>
-              </div>
-              <div class="pipeline-card-skills" style="margin-bottom: 10px;">
-                <span class="pipeline-skill-tag" *ngFor="let skill of candidate.skills">{{ skill }}</span>
               </div>
               <div class="pipeline-card-footer" style="padding-top: 10px; border-top: 1px solid #E2E8F0;">
                 <button 
@@ -1422,8 +1360,19 @@
                     <div [style.color]="getStageColor(c.stage)" style="font-weight: 600;">{{ getStageName(c.stage) }}</div>
                   </div>
                   <div class="detail-row">
-                    <strong style="color: #64748B; font-size: 0.8rem; text-transform: uppercase;">Score</strong>
-                    <div [style.color]="c.score >= 85 ? '#10B981' : c.score >= 70 ? '#F59E0B' : '#EF4444'" style="font-weight: bold; font-size: 1.2rem;">{{ c.score }}%</div>
+                    <strong style="color: #64748B; font-size: 0.8rem; text-transform: uppercase;">Feedback</strong>
+                    <div style="font-weight: 500; font-size: 0.95rem; color: #1E293B; max-height: 4.5em; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 3; line-clamp: 3; -webkit-box-orient: vertical;" [title]="getLatestFeedbackAndRating(c.candidate_id).feedback">
+                      {{ getLatestFeedbackAndRating(c.candidate_id).feedback }}
+                    </div>
+                  </div>
+                  <div class="detail-row">
+                    <strong style="color: #64748B; font-size: 0.8rem; text-transform: uppercase;">Rating</strong>
+                    <div style="font-weight: bold; font-size: 1.1rem; color: #F59E0B;" *ngIf="getLatestFeedbackAndRating(c.candidate_id).rating !== 'N/A'">
+                      <i class="fas fa-star" style="font-size: 0.9rem;"></i> {{ getLatestFeedbackAndRating(c.candidate_id).rating }}
+                    </div>
+                    <div style="font-weight: 500; font-size: 0.95rem; color: #94A3B8;" *ngIf="getLatestFeedbackAndRating(c.candidate_id).rating === 'N/A'">
+                      Pending
+                    </div>
                   </div>
                   <div class="detail-row">
                     <strong style="color: #64748B; font-size: 0.8rem; text-transform: uppercase;">Experience</strong>

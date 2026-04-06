@@ -1697,8 +1697,8 @@ textarea.form-input {
 .pipeline-candidate-card {
   background: #FFFFFF;
   border: 1px solid #E2E8F0;
-  border-radius: 14px;
-  padding: 20px;
+  border-radius: 12px;
+  padding: 14px 16px;
   cursor: pointer;
   transition: all 0.25s ease;
   position: relative;
@@ -1730,8 +1730,8 @@ textarea.form-input {
 .pipeline-card-top {
   display: flex;
   align-items: center;
-  gap: 14px;
-  margin-bottom: 14px;
+  gap: 12px;
+  margin-bottom: 10px;
 }
 
 .pipeline-card-avatar {
@@ -1776,8 +1776,8 @@ textarea.form-input {
 .pipeline-card-meta {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 12px;
+  gap: 8px;
+  margin-bottom: 10px;
 }
 
 .pipeline-stage-badge {
@@ -1820,7 +1820,7 @@ textarea.form-input {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding-top: 12px;
+  padding-top: 10px;
   border-top: 1px solid #F1F5F9;
 }
 
