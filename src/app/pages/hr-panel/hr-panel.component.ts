@@ -41,7 +41,7 @@ export class HrPanelComponent implements OnInit {
     approval_status: 'PENDING',
     closing_date: ''
   };
-  availableLocations: string[] = ['Remote', 'Jaipur, Rajasthan', 'Pune, Maharashtra', 'Bangalore, Karnataka', 'Hyderabad, Telangana', 'Mumbai, Maharashtra', 'Delhi NCR', 'Chennai, Tamil Nadu', 'Kolkata, West Bengal', 'Ahmedabad, Gujarat'];
+  availableLocations: string[] = ['Remote', 'Jaipur', 'Pune', 'Bangalore', 'Hyderabad', 'Mumbai', 'Delhi NCR', 'Chennai', 'Kolkata', 'Ahmedabad'];
   selectedLocations: string[] = [];
   isSubmittingRequisition = false;
   editingJobId: string | null = null;
@@ -1444,6 +1444,12 @@ export class HrPanelComponent implements OnInit {
     event.preventDefault();
     this.dragOverStage = '';
     if (this.draggedCandidate && this.draggedCandidate.stage !== toStageId) {
+      if (toStageId === 'joined') {
+        this.showToast('Candidates cannot be directly moved to the Joined stage.', 'error');
+        this.draggedCandidate = null;
+        return;
+      }
+      
       const validationError = this.validateInterviewStageProgression(this.draggedCandidate, toStageId);
       if (validationError) {
         this.showToast(validationError, 'error');
